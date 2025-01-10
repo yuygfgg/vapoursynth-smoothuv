@@ -6,21 +6,21 @@
 
 #ifdef __ARM_NEON__
 #include "sse2neon.h"
-static inline int _mm_extract_epi16_runtime(__m128i a, int index) {
-    uint16_t values[8];
-    vst1q_u16(values, vreinterpretq_u16_m128i(a));
-    return values[index & 7];
-}
-static inline __m128i _mm_insert_epi16_runtime(__m128i a, int16_t value, int index) {
-    int16_t values[8];
-    vst1q_s16(values, vreinterpretq_s16_m128i(a));
-    values[index & 7] = value;
-    return vreinterpretq_m128i_s16(vld1q_s16(values));
-}
-#undef _mm_insert_epi16
-#undef _mm_extract_epi16
-#define _mm_insert_epi16(a, b, imm) _mm_insert_epi16_runtime(a, b, imm)
-#define _mm_extract_epi16(a, imm) _mm_extract_epi16_runtime(a, imm)
+// static inline int _mm_extract_epi16_runtime(__m128i a, int index) {
+//     uint16_t values[8];
+//     vst1q_u16(values, vreinterpretq_u16_m128i(a));
+//     return values[index & 7];
+// }
+// static inline __m128i _mm_insert_epi16_runtime(__m128i a, int16_t value, int index) {
+//     int16_t values[8];
+//     vst1q_s16(values, vreinterpretq_s16_m128i(a));
+//     values[index & 7] = value;
+//     return vreinterpretq_m128i_s16(vld1q_s16(values));
+// }
+// #undef _mm_insert_epi16
+// #undef _mm_extract_epi16
+// #define _mm_insert_epi16(a, b, imm) _mm_insert_epi16_runtime(a, b, imm)
+// #define _mm_extract_epi16(a, imm) _mm_extract_epi16_runtime(a, imm)
 #else
 #include <emmintrin.h>
 #endif
@@ -84,10 +84,40 @@ static inline void sum_pixels_SSE2(const uint8_t *srcp, uint8_t *dstp, const int
 
     __m128i divres = zeroes;
 
+#ifdef __ARM_NEON__
+{
+    int e;
+
+    e = _mm_extract_epi16(count, 0);
+    divres = _mm_insert_epi16(divres, divinp[e], 0);
+
+    e = _mm_extract_epi16(count, 1);
+    divres = _mm_insert_epi16(divres, divinp[e], 1);
+
+    e = _mm_extract_epi16(count, 2);
+    divres = _mm_insert_epi16(divres, divinp[e], 2);
+
+    e = _mm_extract_epi16(count, 3);
+    divres = _mm_insert_epi16(divres, divinp[e], 3);
+
+    e = _mm_extract_epi16(count, 4);
+    divres = _mm_insert_epi16(divres, divinp[e], 4);
+
+    e = _mm_extract_epi16(count, 5);
+    divres = _mm_insert_epi16(divres, divinp[e], 5);
+
+    e = _mm_extract_epi16(count, 6);
+    divres = _mm_insert_epi16(divres, divinp[e], 6);
+
+    e = _mm_extract_epi16(count, 7);
+    divres = _mm_insert_epi16(divres, divinp[e], 7);
+}
+#else
     for (int i = 0; i < 8; i++) {
         int e = _mm_extract_epi16(count, i);
         divres = _mm_insert_epi16(divres, divinp[e], i);
     }
+#endif
 
     // Now multiply (divres/65536)
     sum = _mm_mulhi_epu16(sum, divres);
