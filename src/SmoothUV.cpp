@@ -4,7 +4,26 @@
 #include <cstdlib>
 #include <cstring>
 
+#ifdef __ARM_NEON__
+#include "sse2neon.h"
+static inline int _mm_extract_epi16_runtime(__m128i a, int index) {
+    uint16_t values[8];
+    vst1q_u16(values, vreinterpretq_u16_m128i(a));
+    return values[index & 7];
+}
+static inline __m128i _mm_insert_epi16_runtime(__m128i a, int16_t value, int index) {
+    int16_t values[8];
+    vst1q_s16(values, vreinterpretq_s16_m128i(a));
+    values[index & 7] = value;
+    return vreinterpretq_m128i_s16(vld1q_s16(values));
+}
+#undef _mm_insert_epi16
+#undef _mm_extract_epi16
+#define _mm_insert_epi16(a, b, imm) _mm_insert_epi16_runtime(a, b, imm)
+#define _mm_extract_epi16(a, imm) _mm_extract_epi16_runtime(a, imm)
+#else
 #include <emmintrin.h>
+#endif
 
 #include <VapourSynth.h>
 #include <VSHelper.h>

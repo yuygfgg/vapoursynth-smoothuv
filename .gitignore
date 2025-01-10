@@ -23,3 +23,6 @@ missing
 src/.deps/
 src/.dirstamp
 src/.libs/
+
+.DS_Store
+.cache/*
